@@ -52,6 +52,10 @@ class ProductsViewModel @Inject constructor(
         productsBlock.reload()
     }
 
+    fun refreshProducts() {
+        productsBlock.reload()
+    }
+
     data class UiState(
         val header: HeaderBlock.State,
         val products: ProductsBlock.State

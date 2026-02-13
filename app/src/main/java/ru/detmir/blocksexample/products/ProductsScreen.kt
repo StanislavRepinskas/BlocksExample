@@ -17,7 +17,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -38,6 +40,7 @@ import coil.compose.AsyncImage
 import java.text.DecimalFormatSymbols
 import ru.detmir.blocksexample.products.domain.model.Product
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductsScreen(
     modifier: Modifier = Modifier,
@@ -72,7 +75,7 @@ fun ProductsScreen(
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         when {
-            uiState.products.isLoading -> {
+            uiState.products.isLoading && uiState.products.products.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -81,7 +84,7 @@ fun ProductsScreen(
                 }
             }
 
-            uiState.products.error != null -> {
+            uiState.products.error != null && uiState.products.products.isEmpty() -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -105,18 +108,24 @@ fun ProductsScreen(
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+                PullToRefreshBox(
+                    isRefreshing = uiState.products.isLoading && uiState.products.products.isNotEmpty(),
+                    onRefresh = vm::refreshProducts,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    items(
-                        items = uiState.products.products,
-                        key = { item -> item.id }
-                    ) { product ->
-                        ProductCard(product = product)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        items(
+                            items = uiState.products.products,
+                            key = { item -> item.id }
+                        ) { product ->
+                            ProductCard(product = product)
+                        }
                     }
                 }
             }
