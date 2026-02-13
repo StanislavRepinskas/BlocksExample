@@ -15,6 +15,7 @@ abstract class BlockViewModel : ViewModel() {
 
     init {
         val blocks = onRegisterBlocks()
+        blocks.forEach { it.onCreate() }
 
         val blockContext = BlockContext(
             uuid = uuid,
@@ -37,13 +38,15 @@ abstract class BlockViewModel : ViewModel() {
     protected abstract fun onBlocksUpdate()
 
     fun start() {
-        blocks.forEach { it.onCreate() }
+
     }
 
+    /** Вызывается при ЖЗ OnStart */
     fun onStart() {
         blocks.forEach { it.onStart() }
     }
 
+    /** Вызывается при ЖЗ OnStop */
     fun onStop() {
         blocks.forEach { it.onStop() }
     }

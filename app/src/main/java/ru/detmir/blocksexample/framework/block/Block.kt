@@ -25,6 +25,7 @@ abstract class Block<State, Callbacks> {
     }
 
     // Lifecycle
+    // Вызывается
     open fun onCreate() {}
     open fun onStart() {}
     open fun onStop() {}
