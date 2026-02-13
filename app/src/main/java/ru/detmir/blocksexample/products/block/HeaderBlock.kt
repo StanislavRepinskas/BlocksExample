@@ -5,7 +5,7 @@ import ru.detmir.blocksexample.framework.block.Block
 
 class HeaderBlock @Inject constructor() : Block<HeaderBlock.State, Unit>() {
 
-    override fun getInitialState(): HeaderBlock.State {
+    override fun getInitialState(): State {
         return State(text = "Products")
     }
 

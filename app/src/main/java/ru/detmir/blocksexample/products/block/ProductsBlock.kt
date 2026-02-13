@@ -5,7 +5,7 @@ import ru.detmir.blocksexample.framework.block.Block
 
 class ProductsBlock @Inject constructor() : Block<ProductsBlock.State, Unit>() {
 
-    override fun getInitialState(): ProductsBlock.State {
+    override fun getInitialState(): State {
         return State(text = "No products yet")
     }
 
