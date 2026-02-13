@@ -1,5 +1,6 @@
 package ru.detmir.blocksexample.products.data
 
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 import ru.detmir.blocksexample.products.domain.model.Product
 import ru.detmir.blocksexample.products.domain.repository.ProductsRepository
@@ -7,6 +8,7 @@ import ru.detmir.blocksexample.products.domain.repository.ProductsRepository
 class ProductsRepositoryImpl @Inject constructor() : ProductsRepository {
 
     override suspend fun getProducts(): List<Product> {
+        delay(1_000)
         val imageUrls = listOf(
             "https://img.detmir.st/U9jF4vbmNRHuLeK1OZfdCYt70fnlf_tM5Ca3m96t4OQ/rs:fit:500:625/g:sm/ex:1/bg:FFFFFF/aHR0cHM6Ly9jYXRhbG9nLWNkbi5kZXRtaXIuc3QvbWVkaWEveVVDS3pSOHlmSFFyQm9XVkdsY3NtR203bHJzUUFJblVQVHRfd1NhZHJVbz0uanBlZw.webp",
             "https://img.detmir.st/LhMWegWnVXwH9F0cUhe7q4W4PAWj_fkPJbKVPNr3xN0/rs:fit:500:625/g:sm/ex:1/bg:FFFFFF/aHR0cHM6Ly9jYXRhbG9nLWNkbi5kZXRtaXIuc3QvbWVkaWEvc2owN0k4RDNnYzBKU2daRXpGRm1fVnpxRFZGMkViOGlHR2lfSkoxeXE5MD0uanBlZw.webp",

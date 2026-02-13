@@ -26,7 +26,6 @@ abstract class BlockViewModel : ViewModel() {
                 .onEach { onBlocksUpdate() }
                 .launchIn(viewModelScope)
         }
-
         onBlocksUpdate()
     }
 

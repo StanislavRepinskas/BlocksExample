@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import ru.detmir.blocksexample.framework.block.BlockViewModel
+import ru.detmir.blocksexample.framework.block.LoadableBlock
 import ru.detmir.blocksexample.products.block.HeaderBlock
 import ru.detmir.blocksexample.products.block.ProductsBlock
 
@@ -24,6 +25,15 @@ class ProductsViewModel @Inject constructor(
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     init {
+        productsBlock.callbacks = object : LoadableBlock.Callbacks {
+            override fun onLoadSuccess() {
+                onBlocksUpdate()
+            }
+
+            override fun onLoadError() {
+                onBlocksUpdate()
+            }
+        }
         registerBlocks(listOf(headerBlock, productsBlock))
     }
 
@@ -36,6 +46,10 @@ class ProductsViewModel @Inject constructor(
             header = headerBlock.state.value,
             products = productsBlock.state.value
         )
+    }
+
+    fun retryProductsLoading() {
+        productsBlock.reload()
     }
 
     data class UiState(

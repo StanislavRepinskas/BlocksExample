@@ -12,7 +12,7 @@ class ProductsBlock @Inject constructor(
 
     override fun getInitialState(): State {
         return State(
-            isLoading = false,
+            isLoading = true,
             products = emptyList(),
             error = null
         )
@@ -42,7 +42,7 @@ class ProductsBlock @Inject constructor(
                     updateState { prev ->
                         prev.copy(
                             isLoading = false,
-                            error = "Ошибка загрузки"
+                            error = "Что-то пошлло не так, попробуйте снова"
                         )
                     }
                     callbacks?.onLoadError()
