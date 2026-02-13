@@ -1,15 +1,41 @@
 package ru.detmir.blocksexample.products
 
-import ru.detmir.blocksexample.framework.block.Block
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import ru.detmir.blocksexample.framework.block.BlockViewModel
+import ru.detmir.blocksexample.products.block.HeaderBlock
+import ru.detmir.blocksexample.products.block.ProductsBlock
 
-class ProductsViewModel : BlockViewModel() {
+@HiltViewModel
+class ProductsViewModel @Inject constructor(
+    private val headerBlock: HeaderBlock,
+    private val productsBlock: ProductsBlock
+) : BlockViewModel() {
 
-    override fun onRegisterBlocks(): List<Block<*, *>> {
-        TODO("Not yet implemented")
+    private val _uiState = MutableStateFlow(
+        UiState(
+            header = headerBlock.state.value,
+            products = productsBlock.state.value
+        )
+    )
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    init {
+        registerBlocks(listOf(headerBlock, productsBlock))
     }
 
     override fun onBlocksUpdate() {
-        TODO("Not yet implemented")
+        _uiState.value = UiState(
+            header = headerBlock.state.value,
+            products = productsBlock.state.value
+        )
     }
+
+    data class UiState(
+        val header: HeaderBlock.State,
+        val products: ProductsBlock.State
+    )
 }

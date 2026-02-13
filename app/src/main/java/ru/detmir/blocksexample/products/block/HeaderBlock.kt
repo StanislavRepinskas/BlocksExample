@@ -1,11 +1,12 @@
 package ru.detmir.blocksexample.products.block
 
+import javax.inject.Inject
 import ru.detmir.blocksexample.framework.block.Block
 
-class HeaderBlock : Block<HeaderBlock.State, Unit>() {
+class HeaderBlock @Inject constructor() : Block<HeaderBlock.State, Unit>() {
 
     override fun getInitialState(): HeaderBlock.State {
-        TODO("Not yet implemented")
+        return State(text = "Products")
     }
 
     data class State(
