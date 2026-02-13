@@ -1,8 +1,20 @@
 package ru.detmir.blocksexample.products
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -10,11 +22,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import coil.compose.AsyncImage
+import java.text.DecimalFormatSymbols
+import ru.detmir.blocksexample.products.domain.model.Product
 
 @Composable
 fun ProductsScreen(
@@ -47,9 +65,85 @@ fun ProductsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 24.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
-        Text(text = uiState.header.text)
-        Text(text = uiState.products.text)
+        Text(
+            text = uiState.header.text,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        when {
+            uiState.products.isLoading -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                }
+            }
+
+            uiState.products.error != null -> {
+                Text(
+                    text = uiState.products.error.orEmpty(),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+
+            else -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(
+                        items = uiState.products.products,
+                        key = { item -> item.id }
+                    ) { product ->
+                        ProductCard(product = product)
+                    }
+                }
+            }
+        }
     }
+}
+
+@Composable
+private fun ProductCard(product: Product) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(320.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(8.dp)
+    ) {
+        AsyncImage(
+            model = product.imageUrl,
+            contentDescription = product.name,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(RoundedCornerShape(12.dp))
+        )
+
+        Text(
+            text = formatPrice(product.price),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        Text(
+            text = product.name,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+private fun formatPrice(price: Int): String {
+    val groupSeparator = DecimalFormatSymbols().groupingSeparator
+    val raw = price.toString().reversed().chunked(3).joinToString(groupSeparator.toString()).reversed()
+    return "$raw ₽"
 }

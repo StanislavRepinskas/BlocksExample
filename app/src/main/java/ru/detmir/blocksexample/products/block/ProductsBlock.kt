@@ -1,37 +1,62 @@
 package ru.detmir.blocksexample.products.block
 
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import ru.detmir.blocksexample.framework.block.Block
 import ru.detmir.blocksexample.framework.block.LoadableBlock
+import ru.detmir.blocksexample.products.domain.model.Product
 import ru.detmir.blocksexample.products.domain.usecase.GetProductsUseCase
 
 class ProductsBlock @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase
-) : LoadableBlock<ProductsBlock.State, String, LoadableBlock.Callbacks>() {
-
-    private var data = ""
+) : LoadableBlock<ProductsBlock.State, Unit, LoadableBlock.Callbacks>() {
 
     override fun getInitialState(): State {
-        return State(text = "No products yet")
+        return State(
+            isLoading = false,
+            products = emptyList(),
+            error = null
+        )
     }
 
-    override fun load(data: String) {
-        this.data = data
+    override fun load(data: Unit) {
         context?.coroutineScope?.launch {
             updateState { prev ->
-                prev.copy(text = "Loading products")
+                prev.copy(
+                    isLoading = true,
+                    error = null
+                )
             }
-            getProductsUseCase.invoke()
+
+            runCatching { getProductsUseCase.invoke() }
+                .onSuccess { products ->
+                    updateState { prev ->
+                        prev.copy(
+                            isLoading = false,
+                            products = products,
+                            error = null
+                        )
+                    }
+                    callbacks?.onLoadSuccess()
+                }
+                .onFailure {
+                    updateState { prev ->
+                        prev.copy(
+                            isLoading = false,
+                            error = "Ошибка загрузки"
+                        )
+                    }
+                    callbacks?.onLoadError()
+                }
         }
     }
 
     override fun reload() {
-        load(data)
+        load(Unit)
     }
 
     data class State(
-        val text: String
+        val isLoading: Boolean,
+        val products: List<Product>,
+        val error: String?
     )
 }

@@ -27,6 +27,10 @@ class ProductsViewModel @Inject constructor(
         registerBlocks(listOf(headerBlock, productsBlock))
     }
 
+    override fun start() {
+        productsBlock.load(Unit)
+    }
+
     override fun onBlocksUpdate() {
         _uiState.value = UiState(
             header = headerBlock.state.value,
