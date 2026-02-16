@@ -12,7 +12,7 @@ class HeaderBlock @Inject constructor() : Block<HeaderBlock.State, HeaderBlock.C
     override fun getInitialState(): State {
         return State(
             text = "Products",
-            selectedFilterTitles = emptyList(),
+            selectedFilters = emptyList(),
             hasAvailableFilters = false
         )
     }
@@ -26,7 +26,7 @@ class HeaderBlock @Inject constructor() : Block<HeaderBlock.State, HeaderBlock.C
         updateState { prev ->
             prev.copy(
                 hasAvailableFilters = filters.isNotEmpty(),
-                selectedFilterTitles = buildSelectedFilterTitles(selectedFilters)
+                selectedFilters = buildSelectedFilterChips(selectedFilters)
             )
         }
     }
@@ -34,26 +34,34 @@ class HeaderBlock @Inject constructor() : Block<HeaderBlock.State, HeaderBlock.C
     fun onSelectedFiltersChanged(selectedFilters: ProductFilter) {
         updateState { prev ->
             prev.copy(
-                selectedFilterTitles = buildSelectedFilterTitles(selectedFilters)
+                selectedFilters = buildSelectedFilterChips(selectedFilters)
             )
         }
     }
 
-    private fun buildSelectedFilterTitles(selectedFilters: ProductFilter): List<String> {
-        return availableFilters.flatMap { filter ->
+    private fun buildSelectedFilterChips(selectedFilters: ProductFilter): List<SelectedFilterChip> {
+        return availableFilters.mapNotNull { filter ->
             val selectedIds = selectedFilters.getFilterValue(filter.filterId)
-            filter.values
-                .asSequence()
-                .filter { it.id in selectedIds }
-                .map { it.title }
-                .toList()
+            if (selectedIds.isEmpty()) {
+                null
+            } else {
+                SelectedFilterChip(
+                    filterId = filter.filterId,
+                    title = filter.title
+                )
+            }
         }
     }
 
     data class State(
         val text: String,
-        val selectedFilterTitles: List<String>,
+        val selectedFilters: List<SelectedFilterChip>,
         val hasAvailableFilters: Boolean
+    )
+
+    data class SelectedFilterChip(
+        val filterId: String,
+        val title: String
     )
 
     interface Callbacks {

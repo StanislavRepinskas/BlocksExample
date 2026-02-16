@@ -2,6 +2,7 @@ package ru.detmir.blocksexample.products
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
@@ -22,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -33,7 +37,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,6 +52,7 @@ import ru.detmir.blocksexample.products.domain.model.Product
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
 import ru.detmir.blocksexample.products.domain.model.ProductFilter
 import java.text.DecimalFormatSymbols
+import ru.detmir.blocksexample.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,6 +107,7 @@ fun ProductsScreen(
         onRetry = vm::retryProductsLoading,
         onRefresh = vm::refreshProducts,
         onFiltersClick = vm::onFiltersClick,
+        onFilterRemove = vm::onSelectedFilterRemove,
         modifier = modifier
     )
 }
@@ -111,6 +119,7 @@ fun ProductsContent(
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     onFiltersClick: () -> Unit,
+    onFilterRemove: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -153,35 +162,23 @@ fun ProductsContent(
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                Row(
+                LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Button(
-                        onClick = onFiltersClick,
-                        enabled = uiState.header.hasAvailableFilters
-                    ) {
-                        Text(text = "Фильтры")
+                    item {
+                        FilterActionChip(
+                            title = "Фильтры",
+                            hasSelectedFilters = uiState.header.selectedFilters.isNotEmpty(),
+                            onClick = onFiltersClick
+                        )
                     }
-                }
 
-                if (uiState.header.selectedFilterTitles.isNotEmpty()) {
-                    LazyRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(uiState.header.selectedFilterTitles, key = { it }) { title ->
-                            Text(
-                                text = title,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                                    .wrapContentWidth()
-                            )
-                        }
+                    items(uiState.header.selectedFilters, key = { it.filterId }) { chip ->
+                        SelectedFilterChip(
+                            title = chip.title,
+                            onRemove = { onFilterRemove(chip.filterId) }
+                        )
                     }
                 }
 
@@ -209,6 +206,75 @@ fun ProductsContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun FilterActionChip(
+    title: String,
+    hasSelectedFilters: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFFE6EEF9))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .wrapContentWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(
+                id = if (hasSelectedFilters) {
+                    R.drawable.ic_other_filter_selected_pseudo24
+                } else {
+                    R.drawable.ic_other_filter_unselected_pseudo24
+                }
+            ),
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier.size(24.dp)
+        )
+        Text(
+            text = title,
+            color = Color(0xFF111111),
+            style = MaterialTheme.typography.titleMedium
+        )
+    }
+}
+
+@Composable
+private fun SelectedFilterChip(
+    title: String,
+    onRemove: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0xFF1677E6))
+            .padding(start = 12.dp, end = 6.dp, top = 8.dp, bottom = 8.dp)
+            .wrapContentWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium
+        )
+        IconButton(
+            onClick = onRemove,
+            modifier = Modifier.size(24.dp),
+            content = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_24_cross_white),
+                    contentDescription = "Удалить фильтр",
+                    tint = Color.Unspecified
+                )
+            }
+        )
     }
 }
 

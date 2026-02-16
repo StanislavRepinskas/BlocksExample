@@ -88,6 +88,13 @@ class ProductsViewModel @Inject constructor(
         headerBlock.onFiltersClick()
     }
 
+    fun onSelectedFilterRemove(filterId: String) {
+        val updatedFilter = productsBlock.state.value.selectedFilter.copy().apply {
+            removeFilterValue(filterId)
+        }
+        applyFilters(updatedFilter)
+    }
+
     fun applyFilters(filters: ProductFilter) {
         headerBlock.onSelectedFiltersChanged(filters)
         productsBlock.load(filters)
