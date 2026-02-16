@@ -13,6 +13,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,11 +26,20 @@ import ru.detmir.blocksexample.products.domain.model.ProductFilter
 
 @Composable
 fun FiltersScreen(
+    availableFilters: List<ProductAvailableFilter>,
+    initialFilter: ProductFilter,
     onApply: (ProductFilter) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
     vm: FiltersViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(availableFilters, initialFilter) {
+        vm.initialize(
+            availableFilters = availableFilters,
+            initialFilter = initialFilter
+        )
+    }
+
     val uiState by vm.uiState.collectAsState()
 
     FiltersContent(

@@ -1,6 +1,5 @@
 package ru.detmir.blocksexample.products.filters
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -12,27 +11,32 @@ import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
 import ru.detmir.blocksexample.products.domain.model.ProductFilter
 
 @HiltViewModel
-class FiltersViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
+class FiltersViewModel @Inject constructor() : ViewModel() {
 
-    private val availableFilters: List<ProductAvailableFilter> =
-        savedStateHandle.get<ArrayList<ProductAvailableFilter>>(FiltersNavContract.ARG_AVAILABLE_FILTERS)
-            ?.toList()
-            .orEmpty()
-
-    private var draftFilter: ProductFilter =
-        savedStateHandle.get<ProductFilter>(FiltersNavContract.ARG_INITIAL_FILTER)
-            ?.copy()
-            ?: ProductFilter()
+    private var isInitialized = false
+    private var draftFilter: ProductFilter = ProductFilter()
 
     private val _uiState = MutableStateFlow(
         UiState(
-            availableFilters = availableFilters,
-            selectedIdsByFilterId = selectedIdsSnapshot()
+            availableFilters = emptyList(),
+            selectedIdsByFilterId = emptyMap()
         )
     )
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    fun initialize(
+        availableFilters: List<ProductAvailableFilter>,
+        initialFilter: ProductFilter
+    ) {
+        if (isInitialized) return
+
+        draftFilter = initialFilter.copy()
+        _uiState.value = UiState(
+            availableFilters = availableFilters,
+            selectedIdsByFilterId = selectedIdsSnapshot(availableFilters)
+        )
+        isInitialized = true
+    }
 
     fun onFilterCheckedChanged(
         filter: ProductAvailableFilter,
@@ -72,11 +76,13 @@ class FiltersViewModel @Inject constructor(
 
     private fun publishState() {
         _uiState.value = _uiState.value.copy(
-            selectedIdsByFilterId = selectedIdsSnapshot()
+            selectedIdsByFilterId = selectedIdsSnapshot(_uiState.value.availableFilters)
         )
     }
 
-    private fun selectedIdsSnapshot(): Map<String, Set<String>> {
+    private fun selectedIdsSnapshot(
+        availableFilters: List<ProductAvailableFilter>
+    ): Map<String, Set<String>> {
         return availableFilters.associate { filter ->
             filter.filterId to draftFilter.getFilterValue(filter.filterId)
         }
