@@ -1,14 +1,20 @@
 package ru.detmir.blocksexample.products
 
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import ru.detmir.blocksexample.framework.block.BlockViewModel
-import ru.detmir.blocksexample.framework.block.LoadableBlock
 import ru.detmir.blocksexample.products.block.HeaderBlock
 import ru.detmir.blocksexample.products.block.ProductsBlock
+import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
+import ru.detmir.blocksexample.products.domain.model.ProductFilter
 
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
@@ -16,35 +22,58 @@ class ProductsViewModel @Inject constructor(
     private val productsBlock: ProductsBlock
 ) : BlockViewModel() {
 
+    private var availableFilters: List<ProductAvailableFilter> = emptyList()
+
+    private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
+    val navigationEvents: SharedFlow<NavigationEvent> = _navigationEvents.asSharedFlow()
+
     private val _uiState = MutableStateFlow(
         UiState(
             header = headerBlock.state.value,
-            products = productsBlock.state.value
+            products = productsBlock.state.value,
+            availableFilters = availableFilters
         )
     )
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     init {
-        productsBlock.callbacks = object : LoadableBlock.Callbacks {
-            override fun onLoadSuccess() {
+        headerBlock.callbacks = object : HeaderBlock.Callbacks {
+            override fun onFiltersClick() {
+                viewModelScope.launch {
+                    _navigationEvents.emit(NavigationEvent.OpenFilters)
+                }
+            }
+        }
+
+        productsBlock.callbacks = object : ProductsBlock.Callbacks {
+            override fun onAvailableFiltersChanged(filters: List<ProductAvailableFilter>) {
+                availableFilters = filters
+                headerBlock.onAvailableFiltersChanged(
+                    filters = filters,
+                    selectedFilters = productsBlock.state.value.selectedFilter
+                )
                 onBlocksUpdate()
             }
 
+            override fun onLoadSuccess() {
+            }
+
             override fun onLoadError() {
-                onBlocksUpdate()
             }
         }
+
         registerBlocks(listOf(headerBlock, productsBlock))
     }
 
     override fun start() {
-        productsBlock.load(Unit)
+        productsBlock.load(productsBlock.state.value.selectedFilter)
     }
 
     override fun onBlocksUpdate() {
         _uiState.value = UiState(
             header = headerBlock.state.value,
-            products = productsBlock.state.value
+            products = productsBlock.state.value,
+            availableFilters = availableFilters
         )
     }
 
@@ -56,8 +85,22 @@ class ProductsViewModel @Inject constructor(
         productsBlock.reload()
     }
 
+    fun onFiltersClick() {
+        headerBlock.onFiltersClick()
+    }
+
+    fun applyFilters(filters: ProductFilter) {
+        headerBlock.onSelectedFiltersChanged(filters)
+        productsBlock.load(filters)
+    }
+
     data class UiState(
         val header: HeaderBlock.State,
-        val products: ProductsBlock.State
+        val products: ProductsBlock.State,
+        val availableFilters: List<ProductAvailableFilter>
     )
+
+    sealed interface NavigationEvent {
+        data object OpenFilters : NavigationEvent
+    }
 }

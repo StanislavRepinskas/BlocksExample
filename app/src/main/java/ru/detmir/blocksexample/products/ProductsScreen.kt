@@ -6,21 +6,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -43,6 +47,7 @@ import ru.detmir.blocksexample.products.domain.model.Product
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductsScreen(
+    onOpenFilters: () -> Unit,
     modifier: Modifier = Modifier,
     vm: ProductsViewModel = hiltViewModel()
 ) {
@@ -51,6 +56,14 @@ fun ProductsScreen(
 
     LaunchedEffect(vm) {
         vm.start()
+    }
+
+    LaunchedEffect(vm) {
+        vm.navigationEvents.collect { event ->
+            when (event) {
+                ProductsViewModel.NavigationEvent.OpenFilters -> onOpenFilters()
+            }
+        }
     }
 
     DisposableEffect(lifecycleOwner, vm) {
@@ -108,10 +121,45 @@ fun ProductsScreen(
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = vm::onFiltersClick,
+                        enabled = uiState.header.hasAvailableFilters
+                    ) {
+                        Text(text = "Фильтры")
+                    }
+                }
+
+                if (uiState.header.selectedFilterTitles.isNotEmpty()) {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(uiState.header.selectedFilterTitles, key = { it }) { title ->
+                            Text(
+                                text = title,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                                    .wrapContentWidth()
+                            )
+                        }
+                    }
+                }
+
                 PullToRefreshBox(
                     isRefreshing = uiState.products.isLoading && uiState.products.products.isNotEmpty(),
                     onRefresh = vm::refreshProducts,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 8.dp)
                 ) {
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
@@ -120,7 +168,7 @@ fun ProductsScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
-                        items(
+                        gridItems(
                             items = uiState.products.products,
                             key = { item -> item.id }
                         ) { product ->

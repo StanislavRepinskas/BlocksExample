@@ -4,38 +4,48 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import ru.detmir.blocksexample.framework.block.LoadableBlock
 import ru.detmir.blocksexample.products.domain.model.Product
+import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
+import ru.detmir.blocksexample.products.domain.model.ProductFilter
 import ru.detmir.blocksexample.products.domain.usecase.GetProductsUseCase
 
 class ProductsBlock @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase
-) : LoadableBlock<ProductsBlock.State, Unit, LoadableBlock.Callbacks>() {
+) : LoadableBlock<ProductsBlock.State, ProductFilter, ProductsBlock.Callbacks>() {
 
     override fun getInitialState(): State {
         return State(
             isLoading = true,
             products = emptyList(),
-            error = null
+            error = null,
+            selectedFilter = ProductFilter.initialWithCategoryShoes()
         )
     }
 
-    override fun load(data: Unit) {
+    override fun load(data: ProductFilter) {
         context?.coroutineScope?.launch {
             updateState { prev ->
                 prev.copy(
                     isLoading = true,
-                    error = null
+                    error = null,
+                    selectedFilter = data.copy()
                 )
             }
 
-            runCatching { getProductsUseCase.invoke() }
-                .onSuccess { products ->
+            runCatching {
+                getProductsUseCase.invoke(
+                    filters = data,
+                    page = 0
+                )
+            }
+                .onSuccess { result ->
                     updateState { prev ->
                         prev.copy(
                             isLoading = false,
-                            products = products,
+                            products = result.products,
                             error = null
                         )
                     }
+                    callbacks?.onAvailableFiltersChanged(result.availableFilters)
                     callbacks?.onLoadSuccess()
                 }
                 .onFailure {
@@ -51,12 +61,17 @@ class ProductsBlock @Inject constructor(
     }
 
     override fun reload() {
-        load(Unit)
+        load(state.value.selectedFilter)
     }
 
     data class State(
         val isLoading: Boolean,
         val products: List<Product>,
-        val error: String?
+        val error: String?,
+        val selectedFilter: ProductFilter
     )
+
+    interface Callbacks : LoadableBlock.Callbacks {
+        fun onAvailableFiltersChanged(filters: List<ProductAvailableFilter>)
+    }
 }
