@@ -52,7 +52,6 @@ class ProductsViewModel @Inject constructor(
                     filters = filters,
                     selectedFilters = productsBlock.state.value.selectedFilter
                 )
-                onBlocksUpdate()
             }
 
             override fun onLoadSuccess() {

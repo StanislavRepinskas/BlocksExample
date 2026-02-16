@@ -36,27 +36,25 @@ class ProductsBlock @Inject constructor(
                     filters = data,
                     page = 0
                 )
+            }.onSuccess { result ->
+                updateState { prev ->
+                    prev.copy(
+                        isLoading = false,
+                        products = result.products,
+                        error = null
+                    )
+                }
+                callbacks?.onAvailableFiltersChanged(result.availableFilters)
+                callbacks?.onLoadSuccess()
+            }.onFailure {
+                updateState { prev ->
+                    prev.copy(
+                        isLoading = false,
+                        error = "Что-то пошлло не так, попробуйте снова"
+                    )
+                }
+                callbacks?.onLoadError()
             }
-                .onSuccess { result ->
-                    updateState { prev ->
-                        prev.copy(
-                            isLoading = false,
-                            products = result.products,
-                            error = null
-                        )
-                    }
-                    callbacks?.onAvailableFiltersChanged(result.availableFilters)
-                    callbacks?.onLoadSuccess()
-                }
-                .onFailure {
-                    updateState { prev ->
-                        prev.copy(
-                            isLoading = false,
-                            error = "Что-то пошлло не так, попробуйте снова"
-                        )
-                    }
-                    callbacks?.onLoadError()
-                }
         }
     }
 
