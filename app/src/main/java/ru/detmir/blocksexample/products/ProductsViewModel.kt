@@ -22,6 +22,7 @@ class ProductsViewModel @Inject constructor(
     private val productsBlock: ProductsBlock
 ) : BlockViewModel() {
 
+    private var isStarted = false
     private var availableFilters: List<ProductAvailableFilter> = emptyList()
 
     private val _navigationEvents = MutableSharedFlow<NavigationEvent>()
@@ -65,6 +66,8 @@ class ProductsViewModel @Inject constructor(
     }
 
     override fun start() {
+        if (isStarted) return
+        isStarted = true
         productsBlock.load(productsBlock.state.value.selectedFilter)
     }
 
