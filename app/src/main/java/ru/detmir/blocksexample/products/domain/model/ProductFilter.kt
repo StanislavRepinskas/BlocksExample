@@ -1,8 +1,10 @@
 package ru.detmir.blocksexample.products.domain.model
 
+import java.io.Serializable
+
 class ProductFilter(
     private val valuesByFilterId: MutableMap<String, MutableSet<FilterValue>> = mutableMapOf()
-) {
+) : Serializable {
 
     fun addFilterValue(filterId: String, values: Set<FilterValue>) {
         if (values.isEmpty()) {
@@ -65,4 +67,4 @@ data class FilterValue(
     val id: String,
     val value: String,
     val title: String
-)
+) : Serializable

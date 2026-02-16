@@ -42,13 +42,17 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
 import ru.detmir.blocksexample.products.ProductsViewModel.UiState
-import java.text.DecimalFormatSymbols
 import ru.detmir.blocksexample.products.domain.model.Product
+import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
+import ru.detmir.blocksexample.products.domain.model.ProductFilter
+import java.text.DecimalFormatSymbols
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductsScreen(
-    onOpenFilters: () -> Unit,
+    onOpenFilters: (List<ProductAvailableFilter>, ProductFilter) -> Unit,
+    pendingAppliedFilter: ProductFilter?,
+    onAppliedFilterConsumed: () -> Unit,
     modifier: Modifier = Modifier,
     vm: ProductsViewModel = hiltViewModel()
 ) {
@@ -62,9 +66,17 @@ fun ProductsScreen(
     LaunchedEffect(vm) {
         vm.navigationEvents.collect { event ->
             when (event) {
-                ProductsViewModel.NavigationEvent.OpenFilters -> onOpenFilters()
+                ProductsViewModel.NavigationEvent.OpenFilters -> {
+                    onOpenFilters(uiState.availableFilters, uiState.products.selectedFilter)
+                }
             }
         }
+    }
+
+    LaunchedEffect(pendingAppliedFilter) {
+        val appliedFilter = pendingAppliedFilter ?: return@LaunchedEffect
+        vm.applyFilters(appliedFilter)
+        onAppliedFilterConsumed()
     }
 
     DisposableEffect(lifecycleOwner, vm) {
@@ -85,9 +97,10 @@ fun ProductsScreen(
 
     ProductsContent(
         uiState = uiState,
-        onOpenFilters = onOpenFilters,
-        modifier = modifier,
-        vm = vm
+        onRetry = vm::retryProductsLoading,
+        onRefresh = vm::refreshProducts,
+        onFiltersClick = vm::onFiltersClick,
+        modifier = modifier
     )
 }
 
@@ -95,9 +108,10 @@ fun ProductsScreen(
 @Composable
 fun ProductsContent(
     uiState: UiState,
-    onOpenFilters: () -> Unit,
-    modifier: Modifier = Modifier,
-    vm: ProductsViewModel
+    onRetry: () -> Unit,
+    onRefresh: () -> Unit,
+    onFiltersClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
@@ -125,7 +139,7 @@ fun ProductsContent(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        Button(onClick = vm::retryProductsLoading) {
+                        Button(onClick = onRetry) {
                             Text(text = "Перезагрузить")
                         }
                     }
@@ -144,7 +158,7 @@ fun ProductsContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        onClick = vm::onFiltersClick,
+                        onClick = onFiltersClick,
                         enabled = uiState.header.hasAvailableFilters
                     ) {
                         Text(text = "Фильтры")
@@ -173,7 +187,7 @@ fun ProductsContent(
 
                 PullToRefreshBox(
                     isRefreshing = uiState.products.isLoading && uiState.products.products.isNotEmpty(),
-                    onRefresh = vm::refreshProducts,
+                    onRefresh = onRefresh,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(top = 8.dp)

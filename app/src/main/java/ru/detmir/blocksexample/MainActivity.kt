@@ -6,18 +6,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import ru.detmir.blocksexample.products.ProductsScreen
-import ru.detmir.blocksexample.products.ProductsViewModel
+import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
+import ru.detmir.blocksexample.products.domain.model.ProductFilter
+import ru.detmir.blocksexample.products.filters.FiltersNavContract
 import ru.detmir.blocksexample.products.filters.FiltersScreen
 import ru.detmir.blocksexample.ui.theme.BlocksExampleTheme
 
@@ -41,24 +41,40 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        composable(route = ROUTE_PRODUCTS) {
+                        composable(route = ROUTE_PRODUCTS) { backStackEntry ->
+                            val appliedFilter by backStackEntry.savedStateHandle
+                                .getStateFlow<ProductFilter?>(FiltersNavContract.RESULT_APPLIED_FILTER, null)
+                                .collectAsState()
+
                             ProductsScreen(
-                                onOpenFilters = { navController.navigate(ROUTE_FILTERS) }
+                                onOpenFilters = { availableFilters: List<ProductAvailableFilter>, currentFilter: ProductFilter ->
+                                    navController.currentBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set(
+                                            FiltersNavContract.ARG_AVAILABLE_FILTERS,
+                                            ArrayList(availableFilters)
+                                        )
+                                    navController.currentBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set(
+                                            FiltersNavContract.ARG_INITIAL_FILTER,
+                                            currentFilter.copy()
+                                        )
+                                    navController.navigate(ROUTE_FILTERS)
+                                },
+                                pendingAppliedFilter = appliedFilter,
+                                onAppliedFilterConsumed = {
+                                    backStackEntry.savedStateHandle[FiltersNavContract.RESULT_APPLIED_FILTER] = null
+                                }
                             )
                         }
 
-                        composable(route = ROUTE_FILTERS) { backStackEntry ->
-                            val parentEntry = remember(backStackEntry) {
-                                navController.getBackStackEntry(ROUTE_PRODUCTS)
-                            }
-                            val vm: ProductsViewModel = hiltViewModel(parentEntry)
-                            val uiState by vm.uiState.collectAsState()
-
+                        composable(route = ROUTE_FILTERS) {
                             FiltersScreen(
-                                availableFilters = uiState.availableFilters,
-                                initialFilter = uiState.products.selectedFilter,
-                                onApply = { filters ->
-                                    vm.applyFilters(filters)
+                                onApply = { appliedFilter ->
+                                    navController.previousBackStackEntry
+                                        ?.savedStateHandle
+                                        ?.set(FiltersNavContract.RESULT_APPLIED_FILTER, appliedFilter)
                                     navController.popBackStack()
                                 },
                                 onCancel = {

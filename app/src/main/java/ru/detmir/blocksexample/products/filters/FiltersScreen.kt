@@ -13,29 +13,42 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import ru.detmir.blocksexample.products.domain.model.FilterValue
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
 import ru.detmir.blocksexample.products.domain.model.ProductFilter
 
 @Composable
 fun FiltersScreen(
-    availableFilters: List<ProductAvailableFilter>,
-    initialFilter: ProductFilter,
     onApply: (ProductFilter) -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+    vm: FiltersViewModel = hiltViewModel()
+) {
+    val uiState by vm.uiState.collectAsState()
+
+    FiltersContent(
+        uiState = uiState,
+        onCheckedChange = vm::onFilterCheckedChanged,
+        onApply = { onApply(vm.getResultFilter()) },
+        onCancel = onCancel,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun FiltersContent(
+    uiState: FiltersViewModel.UiState,
+    onCheckedChange: (ProductAvailableFilter, FilterValue, Boolean) -> Unit,
+    onApply: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val draftFilter = remember(initialFilter) { initialFilter.copy() }
-    var revision by remember { mutableIntStateOf(0) }
-    val selectedSnapshot = remember(revision) { draftFilter.getSelectedValues() }
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -54,7 +67,7 @@ fun FiltersScreen(
                 Button(onClick = onCancel) {
                     Text(text = "Отмена")
                 }
-                Button(onClick = { onApply(draftFilter.copy()) }) {
+                Button(onClick = onApply) {
                     Text(text = "Применить")
                 }
             }
@@ -66,7 +79,7 @@ fun FiltersScreen(
                 .padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(availableFilters, key = { filter -> filter.filterId }) { filter ->
+            items(uiState.availableFilters, key = { filter -> filter.filterId }) { filter ->
                 Text(
                     text = filter.title,
                     style = MaterialTheme.typography.titleMedium,
@@ -74,8 +87,9 @@ fun FiltersScreen(
                 )
 
                 filter.values.forEach { value ->
-                    val selectedIds = selectedSnapshot[filter.filterId]?.map { it.id }?.toSet().orEmpty()
+                    val selectedIds = uiState.selectedIdsByFilterId[filter.filterId].orEmpty()
                     val isChecked = value.id in selectedIds
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -83,51 +97,13 @@ fun FiltersScreen(
                         Checkbox(
                             checked = isChecked,
                             onCheckedChange = { checked ->
-                                updateDraftFilter(
-                                    draftFilter = draftFilter,
-                                    filter = filter,
-                                    value = value,
-                                    checked = checked
-                                )
-                                revision++
+                                onCheckedChange(filter, value, checked)
                             }
                         )
                         Text(text = value.title)
                     }
                 }
             }
-        }
-    }
-}
-
-private fun updateDraftFilter(
-    draftFilter: ProductFilter,
-    filter: ProductAvailableFilter,
-    value: FilterValue,
-    checked: Boolean
-) {
-    if (!checked) {
-        draftFilter.removeFilterValue(filter.filterId, value.id)
-        return
-    }
-
-    when (filter.type) {
-        ProductAvailableFilter.Type.Single -> {
-            draftFilter.addFilterValue(
-                filterId = filter.filterId,
-                values = setOf(value)
-            )
-        }
-
-        ProductAvailableFilter.Type.Multiple -> {
-            val currentValues = filter.values.filter {
-                it.id in draftFilter.getFilterValue(filter.filterId)
-            }.toMutableSet()
-            currentValues.add(value)
-            draftFilter.addFilterValue(
-                filterId = filter.filterId,
-                values = currentValues
-            )
         }
     }
 }
