@@ -41,6 +41,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
+import ru.detmir.blocksexample.products.ProductsViewModel.UiState
 import java.text.DecimalFormatSymbols
 import ru.detmir.blocksexample.products.domain.model.Product
 
@@ -82,6 +83,22 @@ fun ProductsScreen(
         }
     }
 
+    ProductsContent(
+        uiState = uiState,
+        onOpenFilters = onOpenFilters,
+        modifier = modifier,
+        vm = vm
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductsContent(
+    uiState: UiState,
+    onOpenFilters: () -> Unit,
+    modifier: Modifier = Modifier,
+    vm: ProductsViewModel
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -196,7 +213,11 @@ private fun ProductCard(product: Product) {
             contentDescription = product.name,
             contentScale = ContentScale.Crop,
             onError = { error ->
-                Log.e("CoilProductImage", "Failed to load ${product.imageUrl}", error.result.throwable)
+                Log.e(
+                    "CoilProductImage",
+                    "Failed to load ${product.imageUrl}",
+                    error.result.throwable
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -221,6 +242,7 @@ private fun ProductCard(product: Product) {
 
 private fun formatPrice(price: Int): String {
     val groupSeparator = DecimalFormatSymbols().groupingSeparator
-    val raw = price.toString().reversed().chunked(3).joinToString(groupSeparator.toString()).reversed()
+    val raw =
+        price.toString().reversed().chunked(3).joinToString(groupSeparator.toString()).reversed()
     return "$raw ₽"
 }
