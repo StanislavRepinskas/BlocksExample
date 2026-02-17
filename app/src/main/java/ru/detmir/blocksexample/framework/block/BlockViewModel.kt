@@ -17,7 +17,7 @@ abstract class BlockViewModel : ViewModel() {
 
         val blockContext = BlockContext(
             uuid = uuid,
-            coroutineScope = viewModelScope
+            scope = viewModelScope
         )
 
         this.blocks.forEach {

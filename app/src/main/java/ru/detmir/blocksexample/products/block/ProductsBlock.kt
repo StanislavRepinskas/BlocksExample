@@ -22,7 +22,7 @@ class ProductsBlock @Inject constructor(
     }
 
     override fun load(data: ProductFilter) {
-        context?.coroutineScope?.launch {
+        context.scope.launch {
             updateState { prev ->
                 prev.copy(
                     isLoading = true,

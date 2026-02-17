@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 data class BlockContext(
     val uuid: String,
-    val coroutineScope: CoroutineScope
+    val scope: CoroutineScope
 )
 
 abstract class Block<State, Callbacks> {
@@ -16,7 +16,7 @@ abstract class Block<State, Callbacks> {
 
     var callbacks: Callbacks? = null
 
-    var context: BlockContext? = null
+    lateinit var context: BlockContext
 
     protected abstract fun getInitialState(): State
 
@@ -25,7 +25,6 @@ abstract class Block<State, Callbacks> {
     }
 
     // Lifecycle
-    // Вызывается
     open fun onCreate() {}
     open fun onStart() {}
     open fun onStop() {}
