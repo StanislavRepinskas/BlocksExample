@@ -62,7 +62,7 @@ class ProductsViewModel @Inject constructor(
             }
         }
 
-        registerBlocks(listOf(headerBlock, productsBlock))
+        registerBlocks(headerBlock, productsBlock)
     }
 
     override fun start() {
