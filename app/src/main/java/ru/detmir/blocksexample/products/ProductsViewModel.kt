@@ -71,7 +71,7 @@ class ProductsViewModel @Inject constructor(
         productsBlock.load(productsBlock.state.value.selectedFilter)
     }
 
-    override fun onBlocksUpdate() {
+    override fun onUpdateBlocks() {
         _uiState.value = UiState(
             header = headerBlock.state.value,
             products = productsBlock.state.value,

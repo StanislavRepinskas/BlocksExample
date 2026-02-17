@@ -35,11 +35,11 @@ abstract class BlockViewModel : ViewModel() {
             .toTypedArray()
 
         collectBlockJob = combine(*observables) { /* No-op */ }
-            .onEach { onBlocksUpdate() }
+            .onEach { onUpdateBlocks() }
             .launchIn(viewModelScope)
     }
 
-    protected abstract fun onBlocksUpdate()
+    protected abstract fun onUpdateBlocks()
 
     open fun start() {
     }
