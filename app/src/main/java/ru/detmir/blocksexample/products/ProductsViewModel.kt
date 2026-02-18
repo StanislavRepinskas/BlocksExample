@@ -2,6 +2,7 @@ package ru.detmir.blocksexample.products
 
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,15 +14,23 @@ import kotlinx.coroutines.launch
 import ru.detmir.blocksexample.framework.UIStatus
 import ru.detmir.blocksexample.framework.block.viewmodel.BlockRegistry
 import ru.detmir.blocksexample.framework.block.viewmodel.BlockViewModel
+import ru.detmir.blocksexample.products.block.Example1
 import ru.detmir.blocksexample.products.block.HeaderBlock
 import ru.detmir.blocksexample.products.block.ProductsBlock
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
 import ru.detmir.blocksexample.products.domain.model.ProductFilter
 
+/*
+* 1) Внутрение блоки?
+* 2) Фича флаги
+* 3) ?
+* */
+
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
     private val headerBlock: HeaderBlock,
-    private val productsBlock: ProductsBlock
+    private val productsBlock: ProductsBlock,
+    private val example1: Example1
 ) : BlockViewModel() {
 
     private var isStarted = false
@@ -60,6 +69,8 @@ class ProductsViewModel @Inject constructor(
                 )
             }
         })
+
+        registry.register(example1)
     }
 
     override fun start() {
@@ -67,13 +78,12 @@ class ProductsViewModel @Inject constructor(
         if (isStarted) return
         isStarted = true
 
-        viewModelScope.launch {
-            productsBlock.load(productsBlock.state.value.selectedFilter)
-        }
+        productsBlock.load()
     }
 
     override fun onUpdateBlocks() {
         val productsState = productsBlock.state.value
+
         val uiStatus = when {
             productsState.isLoading && productsState.products.isEmpty() -> UIStatus.LOADING
             productsState.error != null && productsState.products.isEmpty() -> UIStatus.ERROR

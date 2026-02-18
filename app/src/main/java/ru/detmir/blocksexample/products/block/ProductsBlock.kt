@@ -1,5 +1,7 @@
 package ru.detmir.blocksexample.products.block
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import ru.detmir.blocksexample.framework.block.block.LoadBlock
 import ru.detmir.blocksexample.products.domain.model.Product
@@ -20,7 +22,17 @@ class ProductsBlock @Inject constructor(
         )
     }
 
+    var job: Job? = null
+
+    fun load() {
+        job?.cancel()
+        job = context.scope.launch {
+            // TODO
+        }
+    }
+
     override suspend fun load(data: ProductFilter): Result<Unit> {
+
         updateState { prev ->
             prev.copy(
                 isLoading = true,
