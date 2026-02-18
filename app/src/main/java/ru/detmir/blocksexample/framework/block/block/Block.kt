@@ -21,20 +21,21 @@ abstract class Block<State, Callbacks> {
         _state.value = block.invoke(_state.value)
     }
 
+    /** Подлючение блока к ViewModel. */
     fun attach(context: BlockContext, callbacks: Callbacks) {
         this.context = context
         this._callbacks = callbacks
     }
 
-    /** Вызывается когда блок готов к работе, после после регистрации блока на ViewModel. */
-    open fun onCreate() {}
-
-    /** Вызывается когда показан UI. В данном методе нужно делать подписки. */
+    /** Вызывается на ViewModel.start(). */
     open fun onStart() {}
 
-    /** Вызывается когда UI скрыт. В данном методе нужно отписыватья от подписок сделанных в onStart(). */
-    open fun onStop() {}
+    /** Вызывается когда показан UI. */
+    open fun onUiStart() {}
+
+    /** Вызывается когда UI скрыт. */
+    open fun onUiStop() {}
 
     /** Вызывается когда уничтожается ViewModel. */
-    open fun onDestroy() {}
+    open fun onCleared() {}
 }

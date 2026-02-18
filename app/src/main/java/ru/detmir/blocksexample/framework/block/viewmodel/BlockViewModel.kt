@@ -37,7 +37,6 @@ abstract class BlockViewModel : ViewModel() {
 
         blocks = registrations.map { it.block }
         registrations.forEach { it.attach(blockContext) }
-        blocks.forEach { it.onCreate() }
 
         val observables = this.blocks
             .map { it.state }
@@ -54,19 +53,20 @@ abstract class BlockViewModel : ViewModel() {
 
     open fun start() {
         registerBlocks()
-    }
-
-    fun onStart() {
         blocks.forEach { it.onStart() }
     }
 
+    fun onStart() {
+        blocks.forEach { it.onUiStart() }
+    }
+
     fun onStop() {
-        blocks.forEach { it.onStop() }
+        blocks.forEach { it.onUiStop() }
     }
 
     override fun onCleared() {
         super.onCleared()
         collectBlockJob?.cancel()
-        blocks.forEach { it.onDestroy() }
+        blocks.forEach { it.onCleared() }
     }
 }

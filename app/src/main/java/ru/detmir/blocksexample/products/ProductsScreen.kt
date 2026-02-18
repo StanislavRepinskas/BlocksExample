@@ -30,7 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,9 +42,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.LifecycleStartEffect
 import coil.compose.AsyncImage
 import ru.detmir.blocksexample.framework.UIStatus
 import ru.detmir.blocksexample.products.ProductsViewModel.UiState
@@ -65,7 +62,13 @@ fun ProductsScreen(
     vm: ProductsViewModel = hiltViewModel()
 ) {
     val uiState by vm.uiState.collectAsState()
-    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LifecycleStartEffect(vm) {
+        vm.onStart()
+        onStopOrDispose {
+            vm.onStop()
+        }
+    }
 
     LaunchedEffect(vm) {
         vm.start()
@@ -85,22 +88,6 @@ fun ProductsScreen(
         val appliedFilter = pendingAppliedFilter ?: return@LaunchedEffect
         vm.applyFilters(appliedFilter)
         onAppliedFilterConsumed()
-    }
-
-    DisposableEffect(lifecycleOwner, vm) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> vm.onStart()
-                Lifecycle.Event.ON_STOP -> vm.onStop()
-                else -> Unit
-            }
-        }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
     }
 
     ProductsContent(

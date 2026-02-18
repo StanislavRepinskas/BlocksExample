@@ -10,8 +10,8 @@ import javax.inject.Inject
 
 private class ExampleIndependentBlock : Block<ExampleIndependentBlock.State, Unit>() {
 
-    override fun onCreate() {
-        super.onCreate()
+    override fun onStart() {
+        super.onStart()
         load()
     }
 
