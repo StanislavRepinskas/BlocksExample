@@ -22,47 +22,39 @@ class ProductsBlock @Inject constructor(
         )
     }
 
-    var job: Job? = null
-
-    fun load() {
-        job?.cancel()
-        job = context.scope.launch {
-            // TODO
-        }
-    }
-
-    override suspend fun load(data: ProductFilter): Result<Unit> {
-
-        updateState { prev ->
-            prev.copy(
-                isLoading = true,
-                error = null,
-                selectedFilter = data.copy()
-            )
-        }
-
-        return runCatching {
-            getProductsUseCase.invoke(
-                filters = data,
-                page = 0
-            )
-        }.onSuccess { result ->
+    override fun load(data: ProductFilter) {
+        context.scope.launch {
             updateState { prev ->
                 prev.copy(
-                    isLoading = false,
-                    products = result.products,
-                    error = null
+                    isLoading = true,
+                    error = null,
+                    selectedFilter = data.copy()
                 )
             }
-            callbacks.onAvailableFiltersChanged(result.availableFilters)
-        }.onFailure {
-            updateState { prev ->
-                prev.copy(
-                    isLoading = false,
-                    error = "Что-то пошлло не так, попробуйте снова"
+
+            runCatching {
+                getProductsUseCase.invoke(
+                    filters = data,
+                    page = 0
                 )
+            }.onSuccess { result ->
+                updateState { prev ->
+                    prev.copy(
+                        isLoading = false,
+                        products = result.products,
+                        error = null
+                    )
+                }
+                callbacks.onAvailableFiltersChanged(result.availableFilters)
+            }.onFailure {
+                updateState { prev ->
+                    prev.copy(
+                        isLoading = false,
+                        error = "Что-то пошлло не так, попробуйте снова"
+                    )
+                }
             }
-        }.map { Unit }
+        }
     }
 
     data class State(

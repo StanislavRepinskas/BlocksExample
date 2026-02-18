@@ -78,7 +78,7 @@ class ProductsViewModel @Inject constructor(
         if (isStarted) return
         isStarted = true
 
-        productsBlock.load()
+        productsBlock.load(productsBlock.state.value.selectedFilter)
     }
 
     override fun onUpdateBlocks() {
