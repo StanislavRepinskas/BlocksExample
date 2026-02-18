@@ -1,11 +1,12 @@
 package ru.detmir.blocksexample.products.block
 
 import javax.inject.Inject
-import ru.detmir.blocksexample.framework.block.block.Block
+import ru.detmir.blocksexample.framework.block.block.InputBlock
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
 import ru.detmir.blocksexample.products.domain.model.ProductFilter
 
-class HeaderBlock @Inject constructor() : Block<HeaderBlock.State, HeaderBlock.Callbacks>() {
+class HeaderBlock @Inject constructor() :
+    InputBlock<HeaderBlock.State, HeaderBlock.Input, HeaderBlock.Callbacks>() {
 
     private var availableFilters: List<ProductAvailableFilter> = emptyList()
 
@@ -21,20 +22,12 @@ class HeaderBlock @Inject constructor() : Block<HeaderBlock.State, HeaderBlock.C
         callbacks.onFiltersClick()
     }
 
-    fun onAvailableFiltersChanged(filters: List<ProductAvailableFilter>, selectedFilters: ProductFilter) {
-        availableFilters = filters
+    override fun setInput(input: Input) {
+        availableFilters = input.availableFilters
         updateState { prev ->
             prev.copy(
-                hasAvailableFilters = filters.isNotEmpty(),
-                selectedFilters = buildSelectedFilterChips(selectedFilters)
-            )
-        }
-    }
-
-    fun onSelectedFiltersChanged(selectedFilters: ProductFilter) {
-        updateState { prev ->
-            prev.copy(
-                selectedFilters = buildSelectedFilterChips(selectedFilters)
+                hasAvailableFilters = input.availableFilters.isNotEmpty(),
+                selectedFilters = buildSelectedFilterChips(input.selectedFilters)
             )
         }
     }
@@ -62,6 +55,11 @@ class HeaderBlock @Inject constructor() : Block<HeaderBlock.State, HeaderBlock.C
     data class SelectedFilterChip(
         val filterId: String,
         val title: String
+    )
+
+    data class Input(
+        val availableFilters: List<ProductAvailableFilter>,
+        val selectedFilters: ProductFilter
     )
 
     interface Callbacks {

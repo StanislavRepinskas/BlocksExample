@@ -1,12 +1,5 @@
 package ru.detmir.blocksexample.framework.block.block
 
-abstract class LoadableBlock<State, Input, Callbacks : LoadableBlock.Callbacks> : Block<State, Callbacks>() {
-
-    abstract fun load(data: Input)
-    abstract fun reload()
-
-    interface Callbacks {
-        fun onLoadSuccess()
-        fun onLoadError()
-    }
+abstract class LoadableBlock<State, Input, Callbacks> : Block<State, Callbacks>() {
+    abstract suspend fun load(data: Input): Result<Unit>
 }

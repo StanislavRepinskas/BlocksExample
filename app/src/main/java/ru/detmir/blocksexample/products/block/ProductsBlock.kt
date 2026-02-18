@@ -1,6 +1,5 @@
 package ru.detmir.blocksexample.products.block
 
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import ru.detmir.blocksexample.framework.block.block.LoadableBlock
 import ru.detmir.blocksexample.products.domain.model.Product
@@ -21,45 +20,37 @@ class ProductsBlock @Inject constructor(
         )
     }
 
-    override fun load(data: ProductFilter) {
-        context.scope.launch {
+    override suspend fun load(data: ProductFilter): Result<Unit> {
+        updateState { prev ->
+            prev.copy(
+                isLoading = true,
+                error = null,
+                selectedFilter = data.copy()
+            )
+        }
+
+        return runCatching {
+            getProductsUseCase.invoke(
+                filters = data,
+                page = 0
+            )
+        }.onSuccess { result ->
             updateState { prev ->
                 prev.copy(
-                    isLoading = true,
-                    error = null,
-                    selectedFilter = data.copy()
+                    isLoading = false,
+                    products = result.products,
+                    error = null
                 )
             }
-
-            runCatching {
-                getProductsUseCase.invoke(
-                    filters = data,
-                    page = 0
+            callbacks.onAvailableFiltersChanged(result.availableFilters)
+        }.onFailure {
+            updateState { prev ->
+                prev.copy(
+                    isLoading = false,
+                    error = "Что-то пошлло не так, попробуйте снова"
                 )
-            }.onSuccess { result ->
-                updateState { prev ->
-                    prev.copy(
-                        isLoading = false,
-                        products = result.products,
-                        error = null
-                    )
-                }
-                callbacks.onAvailableFiltersChanged(result.availableFilters)
-                callbacks.onLoadSuccess()
-            }.onFailure {
-                updateState { prev ->
-                    prev.copy(
-                        isLoading = false,
-                        error = "Что-то пошлло не так, попробуйте снова"
-                    )
-                }
-                callbacks.onLoadError()
             }
-        }
-    }
-
-    override fun reload() {
-        load(state.value.selectedFilter)
+        }.map { Unit }
     }
 
     data class State(
@@ -69,7 +60,7 @@ class ProductsBlock @Inject constructor(
         val selectedFilter: ProductFilter
     )
 
-    interface Callbacks : LoadableBlock.Callbacks {
+    interface Callbacks {
         fun onAvailableFiltersChanged(filters: List<ProductAvailableFilter>)
     }
 }

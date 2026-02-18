@@ -63,7 +63,7 @@ private class ExampleIndependentParamViewModel @Inject constructor(
 ) : BlockViewModel() {
 
     override fun onRegisterBlocks(registry: BlockRegistry) {
-        registry.add(block)
+        registry.register(block)
     }
 
     override fun start() {

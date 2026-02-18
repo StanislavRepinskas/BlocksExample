@@ -47,6 +47,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
+import ru.detmir.blocksexample.framework.UIStatus
 import ru.detmir.blocksexample.products.ProductsViewModel.UiState
 import ru.detmir.blocksexample.products.domain.model.Product
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
@@ -128,7 +129,7 @@ fun ProductsContent(
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         when {
-            uiState.products.isLoading && uiState.products.products.isEmpty() -> {
+            uiState.uiStatus == UIStatus.LOADING -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -137,7 +138,7 @@ fun ProductsContent(
                 }
             }
 
-            uiState.products.error != null && uiState.products.products.isEmpty() -> {
+            uiState.uiStatus == UIStatus.ERROR -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center

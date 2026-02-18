@@ -8,14 +8,14 @@ class Registration(
     val attach: (BlockContext) -> Unit
 )
 
-class BlockRegistry(/*private val context: BlockContext*/) {
+class BlockRegistry() {
     private val registrations = mutableListOf<Registration>()
 
-    fun <State> add(block: Block<State, Unit>) {
-        add(block, Unit)
+    fun <State> register(block: Block<State, Unit>) {
+        register(block, Unit)
     }
 
-    fun <State, Callbacks> add(
+    fun <State, Callbacks> register(
         block: Block<State, Callbacks>,
         callbacks: Callbacks
     ) {

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import ru.detmir.blocksexample.framework.UIStatus
 import ru.detmir.blocksexample.framework.block.viewmodel.BlockRegistry
 import ru.detmir.blocksexample.framework.block.viewmodel.BlockViewModel
 import ru.detmir.blocksexample.products.block.HeaderBlock
@@ -31,6 +32,7 @@ class ProductsViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(
         UiState(
+            uiStatus = UIStatus.LOADING,
             header = headerBlock.state.value,
             products = productsBlock.state.value,
             availableFilters = availableFilters
@@ -39,7 +41,7 @@ class ProductsViewModel @Inject constructor(
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     override fun onRegisterBlocks(registry: BlockRegistry) {
-        registry.add(headerBlock, object : HeaderBlock.Callbacks {
+        registry.register(headerBlock, object : HeaderBlock.Callbacks {
             override fun onFiltersClick() {
                 viewModelScope.launch {
                     _navigationEvents.emit(NavigationEvent.OpenFilters)
@@ -47,19 +49,15 @@ class ProductsViewModel @Inject constructor(
             }
         })
 
-        registry.add(productsBlock, object : ProductsBlock.Callbacks {
+        registry.register(productsBlock, object : ProductsBlock.Callbacks {
             override fun onAvailableFiltersChanged(filters: List<ProductAvailableFilter>) {
                 availableFilters = filters
-                headerBlock.onAvailableFiltersChanged(
-                    filters = filters,
-                    selectedFilters = productsBlock.state.value.selectedFilter
+                headerBlock.setInput(
+                    HeaderBlock.Input(
+                        availableFilters = filters,
+                        selectedFilters = productsBlock.state.value.selectedFilter
+                    )
                 )
-            }
-
-            override fun onLoadSuccess() {
-            }
-
-            override fun onLoadError() {
             }
         })
     }
@@ -68,23 +66,37 @@ class ProductsViewModel @Inject constructor(
         super.start()
         if (isStarted) return
         isStarted = true
-        productsBlock.load(productsBlock.state.value.selectedFilter)
+
+        viewModelScope.launch {
+            productsBlock.load(productsBlock.state.value.selectedFilter)
+        }
     }
 
     override fun onUpdateBlocks() {
+        val productsState = productsBlock.state.value
+        val uiStatus = when {
+            productsState.isLoading && productsState.products.isEmpty() -> UIStatus.LOADING
+            productsState.error != null && productsState.products.isEmpty() -> UIStatus.ERROR
+            else -> UIStatus.SUCCESS
+        }
         _uiState.value = UiState(
+            uiStatus = uiStatus,
             header = headerBlock.state.value,
-            products = productsBlock.state.value,
+            products = productsState,
             availableFilters = availableFilters
         )
     }
 
     fun retryProductsLoading() {
-        productsBlock.reload()
+        viewModelScope.launch {
+            productsBlock.load(productsBlock.state.value.selectedFilter)
+        }
     }
 
     fun refreshProducts() {
-        productsBlock.reload()
+        viewModelScope.launch {
+            productsBlock.load(productsBlock.state.value.selectedFilter)
+        }
     }
 
     fun onFiltersClick() {
@@ -99,11 +111,19 @@ class ProductsViewModel @Inject constructor(
     }
 
     fun applyFilters(filters: ProductFilter) {
-        headerBlock.onSelectedFiltersChanged(filters)
-        productsBlock.load(filters)
+        headerBlock.setInput(
+            HeaderBlock.Input(
+                availableFilters = availableFilters,
+                selectedFilters = filters
+            )
+        )
+        viewModelScope.launch {
+            productsBlock.load(filters)
+        }
     }
 
     data class UiState(
+        val uiStatus: UIStatus,
         val header: HeaderBlock.State,
         val products: ProductsBlock.State,
         val availableFilters: List<ProductAvailableFilter>
