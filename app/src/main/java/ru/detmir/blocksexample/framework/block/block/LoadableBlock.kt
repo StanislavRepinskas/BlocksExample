@@ -1,4 +1,4 @@
-package ru.detmir.blocksexample.framework.block
+package ru.detmir.blocksexample.framework.block.block
 
 abstract class LoadableBlock<State, Input, Callbacks : LoadableBlock.Callbacks> : Block<State, Callbacks>() {
 

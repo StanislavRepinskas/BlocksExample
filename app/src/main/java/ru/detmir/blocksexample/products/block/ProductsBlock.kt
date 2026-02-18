@@ -2,7 +2,7 @@ package ru.detmir.blocksexample.products.block
 
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import ru.detmir.blocksexample.framework.block.LoadableBlock
+import ru.detmir.blocksexample.framework.block.block.LoadableBlock
 import ru.detmir.blocksexample.products.domain.model.Product
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
 import ru.detmir.blocksexample.products.domain.model.ProductFilter
@@ -44,8 +44,8 @@ class ProductsBlock @Inject constructor(
                         error = null
                     )
                 }
-                callbacks?.onAvailableFiltersChanged(result.availableFilters)
-                callbacks?.onLoadSuccess()
+                callbacks.onAvailableFiltersChanged(result.availableFilters)
+                callbacks.onLoadSuccess()
             }.onFailure {
                 updateState { prev ->
                     prev.copy(
@@ -53,7 +53,7 @@ class ProductsBlock @Inject constructor(
                         error = "Что-то пошлло не так, попробуйте снова"
                     )
                 }
-                callbacks?.onLoadError()
+                callbacks.onLoadError()
             }
         }
     }

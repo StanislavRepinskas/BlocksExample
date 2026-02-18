@@ -3,8 +3,9 @@ package ru.detmir.blocksexample.products.block
 import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.launch
 import ru.detmir.blocksexample.framework.UIStatus
-import ru.detmir.blocksexample.framework.block.Block
-import ru.detmir.blocksexample.framework.block.BlockViewModel
+import ru.detmir.blocksexample.framework.block.block.Block
+import ru.detmir.blocksexample.framework.block.viewmodel.BlockRegistry
+import ru.detmir.blocksexample.framework.block.viewmodel.BlockViewModel
 import javax.inject.Inject
 
 private class ExampleIndependentBlock : Block<ExampleIndependentBlock.State, Unit>() {
@@ -61,8 +62,12 @@ private class ExampleIndependentParamViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle
 ) : BlockViewModel() {
 
-    init {
-        registerBlocks(block)
+    override fun onRegisterBlocks(registry: BlockRegistry) {
+        registry.add(block)
+    }
+
+    override fun start() {
+        super.start()
         block.load(savedStateHandle.get<String>("key") ?: "")
     }
 
@@ -82,7 +87,7 @@ private class ExampleDependentBlock :
 
     private fun clear() {
         updateState { prev -> prev.copy(list = emptyList(), uiStatus = UIStatus.SUCCESS) }
-        callbacks?.onClear()
+        callbacks.onClear()
     }
 
     override fun getInitialState(): State {
@@ -95,4 +100,3 @@ private class ExampleDependentBlock :
         fun onClear()
     }
 }
-

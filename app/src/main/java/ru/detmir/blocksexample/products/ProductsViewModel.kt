@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import ru.detmir.blocksexample.framework.block.BlockViewModel
+import ru.detmir.blocksexample.framework.block.viewmodel.BlockRegistry
+import ru.detmir.blocksexample.framework.block.viewmodel.BlockViewModel
 import ru.detmir.blocksexample.products.block.HeaderBlock
 import ru.detmir.blocksexample.products.block.ProductsBlock
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
@@ -37,16 +38,16 @@ class ProductsViewModel @Inject constructor(
     )
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    init {
-        headerBlock.callbacks = object : HeaderBlock.Callbacks {
+    override fun onRegisterBlocks(registry: BlockRegistry) {
+        registry.add(headerBlock, object : HeaderBlock.Callbacks {
             override fun onFiltersClick() {
                 viewModelScope.launch {
                     _navigationEvents.emit(NavigationEvent.OpenFilters)
                 }
             }
-        }
+        })
 
-        productsBlock.callbacks = object : ProductsBlock.Callbacks {
+        registry.add(productsBlock, object : ProductsBlock.Callbacks {
             override fun onAvailableFiltersChanged(filters: List<ProductAvailableFilter>) {
                 availableFilters = filters
                 headerBlock.onAvailableFiltersChanged(
@@ -60,12 +61,11 @@ class ProductsViewModel @Inject constructor(
 
             override fun onLoadError() {
             }
-        }
-
-        registerBlocks(headerBlock, productsBlock)
+        })
     }
 
     override fun start() {
+        super.start()
         if (isStarted) return
         isStarted = true
         productsBlock.load(productsBlock.state.value.selectedFilter)
