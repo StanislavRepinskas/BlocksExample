@@ -20,12 +20,6 @@ import ru.detmir.blocksexample.products.block.ProductsBlock
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
 import ru.detmir.blocksexample.products.domain.model.ProductFilter
 
-/*
-* 1) Внутрение блоки?
-* 2) Фича флаги
-* 3) ?
-* */
-
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
     private val headerBlock: HeaderBlock,
