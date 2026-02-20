@@ -1,9 +1,9 @@
 package ru.detmir.blocksexample.products.block
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import ru.detmir.blocksexample.framework.block.block.LoadBlock
+import ru.detmir.blocksexample.framework.block.example.DmBlockContext
 import ru.detmir.blocksexample.products.domain.model.Product
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
 import ru.detmir.blocksexample.products.domain.model.ProductFilter
@@ -11,7 +11,7 @@ import ru.detmir.blocksexample.products.domain.usecase.GetProductsUseCase
 
 class ProductsBlock @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase
-) : LoadBlock<ProductsBlock.State, ProductFilter, ProductsBlock.Callbacks>() {
+) : LoadBlock<DmBlockContext, ProductsBlock.State, ProductFilter, ProductsBlock.Callbacks>() {
 
     override fun getInitialState(): State {
         return State(

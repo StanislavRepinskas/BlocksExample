@@ -64,9 +64,9 @@ fun ProductsScreen(
     val uiState by vm.uiState.collectAsState()
 
     LifecycleStartEffect(vm) {
-        vm.onStart()
+        vm.onUiStart()
         onStopOrDispose {
-            vm.onStop()
+            vm.onUiStop()
         }
     }
 

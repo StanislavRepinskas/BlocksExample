@@ -1,72 +1,40 @@
 package ru.detmir.blocksexample.framework.block.viewmodel
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import ru.detmir.blocksexample.framework.block.block.Block
 import ru.detmir.blocksexample.framework.block.block.BlockContext
-import java.util.UUID
+import ru.detmir.blocksexample.framework.block.block.BlockController
+import ru.detmir.blocksexample.framework.block.block.BlockRegistry
 
-abstract class BlockViewModel : ViewModel() {
+interface BlockViewModel<Context : BlockContext> {
 
-    protected val uuid = UUID.randomUUID().toString()
-    private var blocks: List<Block<*, *>> = emptyList()
-    private var collectBlockJob: Job? = null
-    private var isBlocksRegistered = false
+    val blockController: BlockController<Context>
 
-    private fun registerBlocks() {
-        if (isBlocksRegistered) return
+    fun createBlockContext(): Context
 
-        collectBlockJob?.cancel()
+    fun onRegisterBlocks(registry: BlockRegistry<Context>)
 
-        val registry = BlockRegistry()
-        onRegisterBlocks(registry)
-        val registrations = registry.getRegistrations()
-        if (registrations.isEmpty()) {
-            isBlocksRegistered = true
-            return
-        }
+    fun onUpdateBlocks()
 
-        val blockContext = BlockContext(
-            uuid = uuid,
-            scope = viewModelScope
+    fun createBlockController(): BlockController<Context> {
+        return BlockController(
+            createBlockContext = ::createBlockContext,
+            onRegisterBlocks = ::onRegisterBlocks,
+            onUpdateBlocks = ::onUpdateBlocks,
         )
-
-        blocks = registrations.map { it.block }
-        registrations.forEach { it.attach(blockContext) }
-
-        val observables = this.blocks
-            .map { it.state }
-            .toTypedArray()
-
-        collectBlockJob = combine(*observables) { /* No-op */ }
-            .onEach { onUpdateBlocks() }
-            .launchIn(viewModelScope)
-        isBlocksRegistered = true
     }
 
-    protected abstract fun onRegisterBlocks(registry: BlockRegistry)
-    protected abstract fun onUpdateBlocks()
-
-    open fun start() {
-        registerBlocks()
-        blocks.forEach { it.onStart() }
+    fun start() {
+        blockController.start()
     }
 
-    fun onStart() {
-        blocks.forEach { it.onUiStart() }
+    fun onUiStart() {
+        blockController.onUiStart()
     }
 
-    fun onStop() {
-        blocks.forEach { it.onUiStop() }
+    fun onUiStop() {
+        blockController.onUiStop()
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        collectBlockJob?.cancel()
-        blocks.forEach { it.onCleared() }
+    fun onBlockViewModelCleared() {
+        blockController.onCleared()
     }
 }

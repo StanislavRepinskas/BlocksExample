@@ -3,7 +3,7 @@ package ru.detmir.blocksexample.framework.block.block
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-abstract class Block<State, Callbacks> {
+abstract class Block<Context : BlockContext, State, Callbacks> {
 
     protected val _state = MutableStateFlow(getInitialState())
     val state = _state.asStateFlow()
@@ -12,7 +12,7 @@ abstract class Block<State, Callbacks> {
         get() = checkNotNull(_callbacks) { "Block callbacks are not attached" }
     private var _callbacks: Callbacks? = null
 
-    protected lateinit var context: BlockContext
+    protected lateinit var context: Context
         private set
 
     protected abstract fun getInitialState(): State
@@ -22,7 +22,7 @@ abstract class Block<State, Callbacks> {
     }
 
     /** Подлючение блока к ViewModel. */
-    fun attach(context: BlockContext, callbacks: Callbacks) {
+    fun attach(context: Context, callbacks: Callbacks) {
         this.context = context
         this._callbacks = callbacks
     }

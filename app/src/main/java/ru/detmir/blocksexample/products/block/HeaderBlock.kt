@@ -1,12 +1,13 @@
 package ru.detmir.blocksexample.products.block
 
 import ru.detmir.blocksexample.framework.block.block.Block
+import ru.detmir.blocksexample.framework.block.example.DmBlockContext
 import javax.inject.Inject
 import ru.detmir.blocksexample.framework.block.block.InputBlock
 import ru.detmir.blocksexample.products.domain.model.ProductAvailableFilter
 import ru.detmir.blocksexample.products.domain.model.ProductFilter
 
-class Example1 @Inject constructor() : Block<Example1.State, Unit>() {
+class Example1 @Inject constructor() : Block<DmBlockContext, Example1.State, Unit>() {
 
     override fun getInitialState(): State {
         TODO("Not yet implemented")
@@ -17,7 +18,7 @@ class Example1 @Inject constructor() : Block<Example1.State, Unit>() {
 
 class HeaderBlock @Inject constructor(
     //val feature: Feature
-) : InputBlock<HeaderBlock.State, HeaderBlock.Input, HeaderBlock.Callbacks>() {
+) : InputBlock<DmBlockContext, HeaderBlock.State, HeaderBlock.Input, HeaderBlock.Callbacks>() {
 
     private var availableFilters: List<ProductAvailableFilter> = emptyList()
 
